@@ -5,7 +5,7 @@ from smapi.models import User, UserProfile
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('title', 'dob', 'address', 'country', 'city', 'zip', 'photo')
+        fields = ('user_type','title', 'dob', 'address', 'country', 'city', 'zip', 'photo')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

@@ -15,8 +15,19 @@ class User(AbstractUser):
 
     def __str__(self):
         return "{}".format(self.email)
+
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    user_types = [
+        ('S','Student'),
+        ('T', 'Teacher'),
+        ('N', 'None'),
+    ]
+    user_type = models.CharField(
+        max_length=10,
+        choices=user_types,
+        default='None',
+    )
     title = models.CharField(max_length=5)
     dob = models.DateField()
     address = models.CharField(max_length=255)
