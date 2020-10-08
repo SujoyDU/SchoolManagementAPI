@@ -82,7 +82,18 @@ create table section
 		on delete set null
 	);
 
-
+create table teaches
+	(ID			varchar(5), 
+	 course_id		varchar(8),
+	 sec_id			varchar(8), 
+	 semester		varchar(6),
+	 year			numeric(4,0),
+	 primary key (ID, course_id, sec_id, semester, year),
+	 foreign key (course_id, sec_id, semester, year) references section (course_id, sec_id, semester, year)
+		on delete cascade,
+	 foreign key (ID) references instructor (ID)
+		on delete cascade
+	);
 '''
 class Department(models.Model):
     dept_name = models.CharField(max_length=255, primary_key=True)
@@ -98,9 +109,34 @@ class Instructor(models.Model):
     designation = models.CharField(max_length=255, default='Lecturer')
     salary = models.PositiveIntegerField(validators=[MinValueValidator(29000), MaxValueValidator(300000)])
 
+    def __str__(self):
+        return "{}".format(self.tid)
+
 class Course(models.Model):
     course_id = models.CharField(max_length=10, primary_key= True)
-    title = models.CharField(max_length=255)
+    course_name = models.CharField(max_length=255)
     dept_name = models.OneToOneField(Department,on_delete=models.CASCADE, related_name='dept')
     credits = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,validators=[MinValueValidator(0.00), MaxValueValidator(12.00)])
+    def __str__(self):
+        return "{course_id} {course_name}".format(course_id = self.course_id,course_name=self.course_name)
 
+
+class Teaches(models.Model):
+    tid = models.ForeignKey(Instructor,on_delete=models.CASCADE, related_name='teacher')
+    course_id = models.ForeignKey(Course,related_name='teachcourse',on_delete=models.CASCADE)
+    # tid = models.CharField(max_length=10)
+    # course_id = models.CharField(max_length=10)
+    semester_time = [
+        ('Fa', 'Fall'),
+        ('Su', 'Summer'),
+        ('Wi', 'Winter'),
+        ('Sp', 'Spring'),
+    ]
+    semester = models.CharField(
+        max_length=10,
+        choices=semester_time,
+        default='Fall',
+    )
+    year = models.DateField(null=True)
+    def __str__(self):
+        return "{tid} {course_id} {semester} {year}".format(tid = self.tid,course_id=self.course_id,semester=self.semester,year=self.year)

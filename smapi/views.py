@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from smapi.models import User,Department,Instructor
-from smapi.serializers import UserSerializer, DepartmentSerializer,InstructorSerializer
+from smapi.models import User,Department,Instructor, Course,Teaches
+from smapi.serializers import UserSerializer, DepartmentSerializer,InstructorSerializer, CourseSerializer,TeachesSerializer
 # Also add these imports
 from smapi.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
@@ -60,5 +60,37 @@ class InstructorViewSet(viewsets.ModelViewSet):
         elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
             permission_classes = [IsLoggedInUserOrAdmin]
         elif self.action == 'list' or self.action == 'destroy' or self.action=='create':
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+    # Add this code block
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create':
+            permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'list' or self.action == 'destroy':
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
+
+class TeachesViewSet(viewsets.ModelViewSet):
+    queryset = Teaches.objects.all()
+    serializer_class = TeachesSerializer
+
+    # Add this code block
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create':
+            permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'list' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]

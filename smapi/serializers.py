@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from smapi.models import User, UserProfile, Department, Instructor
+from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -57,10 +57,16 @@ class InstructorSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('uid','tid','dept_name', 'salary')
 
     def create(self, validated_data):
-        # profile_data = validated_data.pop('profile')
-        # password = validated_data.pop('password')
         instructor = Instructor(**validated_data)
-        # user.set_password(password)
         instructor.save()
-        # UserProfile.objects.create(user=user, **profile_data)
         return instructor
+
+class CourseSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Course
+        fields = ('course_id','course_name','dept_name','credits')
+
+class TeachesSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Teaches
+        fields = ('tid','course_id','semester','year')
