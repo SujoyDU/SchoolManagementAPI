@@ -140,3 +140,52 @@ class Teaches(models.Model):
     year = models.DateField(null=True)
     def __str__(self):
         return "{tid} {course_id} {semester} {year}".format(tid = self.tid,course_id=self.course_id,semester=self.semester,year=self.year)
+
+
+'''
+create table student
+	(ID			varchar(5), 
+	 name			varchar(20) not null, 
+	 dept_name		varchar(20), 
+	 tot_cred		numeric(3,0) check (tot_cred >= 0),
+	 primary key (ID),
+	 foreign key (dept_name) references department (dept_name)
+		on delete set null
+	);
+
+
+create table takes
+	(ID			varchar(5), 
+	 course_id		varchar(8),
+	 sec_id			varchar(8), 
+	 semester		varchar(6),
+	 year			numeric(4,0),
+	 grade		        varchar(2),
+	 primary key (ID, course_id, sec_id, semester, year),
+	 foreign key (course_id, sec_id, semester, year) references section (course_id, sec_id, semester, year)
+		on delete cascade,
+	 foreign key (ID) references student (ID)
+		on delete cascade
+	);
+
+create table student_cgpa
+    (
+        s_id
+        cgpa
+    )
+
+
+
+'''
+
+class Student(models.Model):
+    uid = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student')
+    sid = models.CharField(max_length=10, unique= True, primary_key=True)
+    dept_name = models.OneToOneField(Department,on_delete=models.CASCADE, related_name='dept')
+    total_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,validators=[MinValueValidator(0.00)])
+
+    def __str__(self):
+        return "{}".format(self.sid)
+
+
+
