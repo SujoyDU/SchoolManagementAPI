@@ -10,9 +10,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
-
-from smapi.models import User
-from smapi.serializers import UserSerializer
+from rest_framework.permissions import IsAuthenticated
+from smapi.models import User,Department,Instructor
+from smapi.serializers import UserSerializer, DepartmentSerializer,InstructorSerializer
 # Also add these imports
 from smapi.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
@@ -24,9 +24,41 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         permission_classes = []
         if self.action == 'create':
-            permission_classes = [AllowAny]
+            permission_classes = [IsAdminUser]
         elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
             permission_classes = [IsLoggedInUserOrAdmin]
         elif self.action == 'list' or self.action == 'destroy':
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+
+    # # Add this code block
+    # def get_permissions(self):
+    #     permission_classes = []
+    #     if self.action == 'create':
+    #         permission_classes = [AllowAny]
+    #     elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+    #         permission_classes = [IsLoggedInUserOrAdmin]
+    #     elif self.action == 'list' or self.action == 'destroy':
+    #         permission_classes = [IsAdminUser]
+    #     return [permission() for permission in permission_classes]
+
+class InstructorViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Instructor.objects.all()
+    serializer_class = InstructorSerializer
+    # # Add this code block
+
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create':
+            permission_classes = [AllowAny]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'list' or self.action == 'destroy' or self.action=='create':
             permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
