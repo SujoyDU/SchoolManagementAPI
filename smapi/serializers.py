@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches
+from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches, Student,Takes,StudentGrades
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -70,3 +70,27 @@ class TeachesSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Teaches
         fields = ('tid','course_id','semester','year')
+
+
+class StudentSerializer(serializers.HyperlinkedModelSerializer):
+    # uid = UserSerializer(required=True)
+    class Meta:
+        model = Student
+        fields = ('uid','sid','dept_name', 'total_credit')
+
+    def create(self, validated_data):
+        student = Student(**validated_data)
+        student.save()
+        return student
+
+class TakesSerializer(serializers.HyperlinkedModelSerializer):
+    course_grade = serializers.ReadOnlyField()
+    course_gpa = serializers.ReadOnlyField()
+    class Meta:
+        model = Takes
+        fields = "__all__"
+
+class StudentGradesSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = StudentGrades
+        fields = "__all__"

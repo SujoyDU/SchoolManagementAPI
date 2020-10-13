@@ -124,8 +124,10 @@ class Course(models.Model):
 class Teaches(models.Model):
     tid = models.ForeignKey(Instructor,on_delete=models.CASCADE, related_name='teacher')
     course_id = models.ForeignKey(Course,related_name='teachcourse',on_delete=models.CASCADE)
+
     # tid = models.CharField(max_length=10)
     # course_id = models.CharField(max_length=10)
+
     semester_time = [
         ('Fa', 'Fall'),
         ('Su', 'Summer'),
@@ -174,14 +176,16 @@ create table student_cgpa
         cgpa
     )
 
-
+calculate cgpa
+calculate semester cgpa
+calculate gpa
 
 '''
 
 class Student(models.Model):
     uid = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student')
     sid = models.CharField(max_length=10, unique= True, primary_key=True)
-    dept_name = models.OneToOneField(Department,on_delete=models.CASCADE, related_name='dept')
+    dept_name = models.OneToOneField(Department,on_delete=models.CASCADE, related_name='studept')
     total_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,validators=[MinValueValidator(0.00)])
 
     def __str__(self):
@@ -189,3 +193,82 @@ class Student(models.Model):
 
 
 
+class Takes(models.Model):
+    sid = models.ForeignKey(Student,on_delete=models.CASCADE, related_name='stu')
+    course_id = models.ForeignKey(Course, related_name='takescourse', on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teaches, related_name='teacher',on_delete=models.CASCADE)
+    semester_time = [
+        ('Fa', 'Fall'),
+        ('Su', 'Summer'),
+        ('Wi', 'Winter'),
+        ('Sp', 'Spring'),
+    ]
+    semester = models.CharField(
+        max_length=10,
+        choices=semester_time,
+        default='Fall',
+    )
+
+    course_def = [
+        ('C','Current'),
+        ('F','FAIL'),
+        ('P', 'PASS'),
+        ('W','WITHDRAW'),
+        ('T','TAKEN')
+    ]
+
+    year = models.DateField(null=True)
+    course_marks = models.PositiveIntegerField(null=True)
+    course_status = models.CharField(choices=course_def, max_length=10, default='Current')
+    gpa = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,validators=[MinValueValidator(0.00)])
+
+    @property
+    def course_grade(self):
+        if self.course_status == 'WITHDRAW':
+            return 'W'
+        if self.course_status == 'CURRENT':
+            return 'N/A'
+        if self.course_status == 'TAKEN':
+            if self.course_marks >= 93:
+                return 'A'
+            elif self.course_marks >= 90:
+                return 'A-'
+            elif self.course_marks >= 87:
+                return 'B+'
+            else:
+                return 'F'
+
+    @property
+    def course_gpa(self):
+        if self.course_status == 'WITHDRAW':
+            return -1
+        if self.course_status == 'CURRENT':
+            return -2
+        if self.course_status == 'TAKEN':
+            if self.course_grade == 'A':
+                return 4.00
+            if self.course_grade == 'A-':
+                return 3.50
+
+            if self.course_grade == 'B+':
+                return 3.00
+            if self.course_grade == 'F':
+                return 0.00
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['course_id', 'semester', 'year'], name='unique_course_time'),
+        ]
+
+
+    def __str__(self):
+        return "{sid} {course_id} {semester} {year}".format(tid = self.tid,course_id=self.course_id,semester=self.semester,year=self.year)
+
+
+
+class StudentGrades(models.Model):
+    tid = models.ForeignKey(Teaches, on_delete=models.CASCADE, related_name='teach')
+    students = models.ManyToManyField(Takes,related_name='takes')
+    course_name = models.ForeignKey(Course,related_name='course',on_delete=models.CASCADE)
+    def __str__(self):
+        return "{tid} {students}".format(tid = self.tid, students= self.students)
