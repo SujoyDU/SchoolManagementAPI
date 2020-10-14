@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches, Student,Takes,StudentGrades
+from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches, Student,Takes,Section
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -45,9 +45,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DepartmentSerializer(serializers.HyperlinkedModelSerializer):
+    course = serializers.StringRelatedField(many=True)
+    instructors = serializers.StringRelatedField(many=True)
+    deptstudents = serializers.StringRelatedField(many=True)
     class Meta:
         model = Department
-        fields = ('dept_name','building', 'budget')
+        fields = ('dept_name','building','budget','course','instructors','deptstudents')
 
 
 class InstructorSerializer(serializers.HyperlinkedModelSerializer):
@@ -66,10 +69,17 @@ class CourseSerializer(serializers.HyperlinkedModelSerializer):
         model = Course
         fields = ('course_id','course_name','dept_name','credits')
 
+
+class SectionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Section
+        fields = '__all__'
+
 class TeachesSerializer(serializers.HyperlinkedModelSerializer):
+    totalstudents = serializers.HyperlinkedRelatedField(many=True,queryset=Takes.objects.all(),view_name='takes-detail')
     class Meta:
         model = Teaches
-        fields = ('tid','course_id','semester','year')
+        fields = ('tid','teachcourse','totalstudents')
 
 
 class StudentSerializer(serializers.HyperlinkedModelSerializer):
@@ -84,13 +94,53 @@ class StudentSerializer(serializers.HyperlinkedModelSerializer):
         return student
 
 class TakesSerializer(serializers.HyperlinkedModelSerializer):
-    course_grade = serializers.ReadOnlyField()
-    course_gpa = serializers.ReadOnlyField()
+    # course_grade = serializers.ReadOnlyField()
+    # course_gpa = serializers.ReadOnlyField()
+    course_grade = serializers.SerializerMethodField(method_name='calculate_grade')
+    course_gpa = serializers.SerializerMethodField(method_name='calculate_course_gpa')
     class Meta:
         model = Takes
         fields = "__all__"
 
-class StudentGradesSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = StudentGrades
-        fields = "__all__"
+    def calculate_grade(self,instance):
+        if instance.course_status == 'W':
+            return 'W'
+        if instance.course_status == 'C' and instance.course_marks < 0:
+            return 'N/A'
+        if instance.course_status == 'C' and instance.course_marks > -1:
+            if instance.course_marks >= 93:
+                return 'A'
+            elif instance.course_marks >= 90:
+                return 'A-'
+            elif instance.course_marks >= 87:
+                return 'B+'
+            elif instance.course_marks >= 80:
+                return 'B'
+            elif instance.course_marks >= 70:
+                return 'D'
+            else:
+                return 'F'
+
+    def calculate_course_gpa(self, instance):
+        if instance.course_status == 'W':
+            return 0.00
+        if instance.course_status == 'C' and instance.course_marks < 0:
+            return 0.00
+        if instance.course_status == 'C' and instance.course_marks > -1:
+            if instance.course_marks >= 93:
+                return 4.00
+            elif instance.course_marks >= 90:
+                return 3.85
+            elif instance.course_marks >= 87:
+                return 3.70
+            elif instance.course_marks >= 80:
+                return 3.50
+            elif instance.course_marks >= 70:
+                return 3.00
+            else:
+                return 0.00
+
+# class StudentGradesSerializer(serializers.HyperlinkedModelSerializer):
+#     class Meta:
+#         model = StudentGrades
+#         fields = "__all__"
