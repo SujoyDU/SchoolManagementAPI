@@ -11,8 +11,9 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from smapi.models import User,Department,Instructor, Course,Teaches,Student,Takes,Section
+from smapi.models import User,Department,Instructor, Course,Teaches,Student,Takes,Section, Exam, GiveExam,GiveMarks
 from smapi.serializers import UserSerializer, DepartmentSerializer,InstructorSerializer, CourseSerializer,TeachesSerializer,StudentSerializer,TakesSerializer,SectionSerializer
+from smapi.serializers import ExamSerializer,GiveExamSerializer, GiveMarksSerializer
 # Also add these imports
 from smapi.permissions import IsLoggedInUserOrAdmin, IsAdminUser
 
@@ -23,18 +24,29 @@ class UserViewSet(viewsets.ModelViewSet):
     # Add this code block
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list' :
             permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy':
-            permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
 
+# class UserProfileViewset(viewsets.ModelViewSet):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+
 class DepartmentViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
+
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create' or self.action == 'destroy':
+            permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        return [permission() for permission in permission_classes]
 
     # # Add this code block
     # def get_permissions(self):
@@ -55,12 +67,10 @@ class InstructorViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
-            permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy' or self.action=='create':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
         return [permission() for permission in permission_classes]
 
 
@@ -71,13 +81,12 @@ class CourseViewSet(viewsets.ModelViewSet):
     # Add this code block
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
-            permission_classes = [IsAdminUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy':
-            permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
         return [permission() for permission in permission_classes]
+
 
 class SectionViewSet(viewsets.ModelViewSet):
     queryset = Section.objects.all()
@@ -86,12 +95,10 @@ class SectionViewSet(viewsets.ModelViewSet):
     # Add this code block
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
             permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy':
-            permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
 
 
@@ -102,12 +109,10 @@ class TeachesViewSet(viewsets.ModelViewSet):
     # Add this code block
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
-            permission_classes = [IsAdminUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy':
-            permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
         return [permission() for permission in permission_classes]
 
 
@@ -119,12 +124,10 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
-            permission_classes = [AllowAny]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
-            permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy' or self.action=='create':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
         return [permission() for permission in permission_classes]
 
 
@@ -135,15 +138,59 @@ class TakesViewSet(viewsets.ModelViewSet):
     # Add this code block
     def get_permissions(self):
         permission_classes = []
-        if self.action == 'create':
-            permission_classes = [IsAdminUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+        if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsLoggedInUserOrAdmin]
-        elif self.action == 'list' or self.action == 'destroy':
-            permission_classes = [IsAdminUser]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
+
         return [permission() for permission in permission_classes]
 
-#
+
+
+class ExamViewSet(viewsets.ModelViewSet):
+    queryset = Exam.objects.all()
+    serializer_class = ExamSerializer
+
+    # Add this code block
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create' or self.action == 'destroy':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
+
+        return [permission() for permission in permission_classes]
+
+class GiveExamViewSet(viewsets.ModelViewSet):
+    queryset = GiveExam.objects.all()
+    serializer_class = GiveExamSerializer
+
+    # Add this code block
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create' or self.action == 'destroy':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
+
+        return [permission() for permission in permission_classes]
+
+class GiveMarksViewSet(viewsets.ModelViewSet):
+    queryset = GiveMarks.objects.all()
+    serializer_class = GiveMarksSerializer
+
+    # Add this code block
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'create' or self.action == 'destroy':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
+
+        return [permission() for permission in permission_classes]
+
+
+
 # class StudentGradeViewSet(viewsets.ModelViewSet):
 #     queryset = Takes.objects.all()
 #     serializer_class = TakesSerializer

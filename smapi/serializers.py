@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches, Student,Takes,Section
+from smapi.models import User, UserProfile, Department, Instructor, Course, Teaches, Student,Takes,Section, Exam, GiveExam, GiveMarks
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -57,7 +57,7 @@ class InstructorSerializer(serializers.HyperlinkedModelSerializer):
     # uid = UserSerializer(required=True)
     class Meta:
         model = Instructor
-        fields = ('uid','tid','dept_name', 'salary')
+        fields = ('uid','tid','dept_name','designation','salary')
 
     def create(self, validated_data):
         instructor = Instructor(**validated_data)
@@ -71,74 +71,130 @@ class CourseSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SectionSerializer(serializers.HyperlinkedModelSerializer):
+    # teachers = serializers.HyperlinkedRelatedField(many=True,queryset=Teaches.objects.all(),view_name='teaches-detail')
+    # students = serializers.HyperlinkedRelatedField(many=True,queryset=Takes.objects.all(),view_name='takes-detail')
     class Meta:
         model = Section
         fields = '__all__'
 
 class TeachesSerializer(serializers.HyperlinkedModelSerializer):
-    totalstudents = serializers.HyperlinkedRelatedField(many=True,queryset=Takes.objects.all(),view_name='takes-detail')
+    # totalstudents = serializers.HyperlinkedRelatedField(many=True,queryset=Takes.objects.all(),view_name='takes-detail')
+    # giveGrades = serializers.SerializerMethodField(method_name='calculate_credits')
+    studentList = serializers.SerializerMethodField(method_name='get_students')
+
     class Meta:
         model = Teaches
-        fields = ('tid','teachcourse','totalstudents')
+        fields = ('tid','teachcourse','studentList')
+
+    def get_students(self,request):
+        students = Takes.objects.filter(take_course=request.teachcourse).values('sid')
+        return students;
+
+    # def give_grade(self,request):
 
 
 class StudentSerializer(serializers.HyperlinkedModelSerializer):
-    # uid = UserSerializer(required=True)
+
+    total_credit = serializers.SerializerMethodField(method_name='calculate_credits')
     class Meta:
         model = Student
-        fields = ('uid','sid','dept_name', 'total_credit')
+        fields = ('uid','sid','dept_name','total_credit')
 
     def create(self, validated_data):
         student = Student(**validated_data)
         student.save()
         return student
 
+    def calculate_credits(self, request):
+        total_credit = 0.00
+        takes_courses = Takes.objects.filter(sid=request.pk)
+        for tc in takes_courses:
+            total_credit += tc.take_course.course_id.credits
+        return total_credit
+
+
+
+
 class TakesSerializer(serializers.HyperlinkedModelSerializer):
-    # course_grade = serializers.ReadOnlyField()
-    # course_gpa = serializers.ReadOnlyField()
+    course_grade = serializers.ReadOnlyField()
+    course_gpa = serializers.ReadOnlyField()
+    course_marks = serializers.SerializerMethodField(method_name='get_marks')
     course_grade = serializers.SerializerMethodField(method_name='calculate_grade')
     course_gpa = serializers.SerializerMethodField(method_name='calculate_course_gpa')
     class Meta:
         model = Takes
         fields = "__all__"
 
+    def get_marks(self,request):
+        if(request.takesstudent.examobj.exam_marks):
+            return request.takesstudent.examobj.exam_marks
+        else: return -1.00
+        pass
+
     def calculate_grade(self,instance):
         if instance.course_status == 'W':
             return 'W'
+
+        if (instance.takesstudent):
+            if(instance.takesstudent.examobj):
+                if(instance.takesstudent.examobj.exam_marks):
+                    if instance.takesstudent.examobj.exam_marks >= 93:
+                        return 'A'
+                    elif instance.takesstudent.examobj.exam_marks >= 90:
+                        return 'A-'
+                    elif instance.takesstudent.examobj.exam_marks >= 87:
+                        return 'B+'
+                    elif instance.takesstudent.examobj.exam_marks >= 80:
+                        return 'B'
+                    elif instance.takesstudent.examobj.exam_marks >= 70:
+                        return 'D'
+                    else:
+                        return 'F'
+
         if instance.course_status == 'C' and instance.course_marks < 0:
             return 'N/A'
-        if instance.course_status == 'C' and instance.course_marks > -1:
-            if instance.course_marks >= 93:
-                return 'A'
-            elif instance.course_marks >= 90:
-                return 'A-'
-            elif instance.course_marks >= 87:
-                return 'B+'
-            elif instance.course_marks >= 80:
-                return 'B'
-            elif instance.course_marks >= 70:
-                return 'D'
-            else:
-                return 'F'
 
     def calculate_course_gpa(self, instance):
         if instance.course_status == 'W':
             return 0.00
-        if instance.course_status == 'C' and instance.course_marks < 0:
-            return 0.00
-        if instance.course_status == 'C' and instance.course_marks > -1:
-            if instance.course_marks >= 93:
-                return 4.00
-            elif instance.course_marks >= 90:
-                return 3.85
-            elif instance.course_marks >= 87:
-                return 3.70
-            elif instance.course_marks >= 80:
-                return 3.50
-            elif instance.course_marks >= 70:
-                return 3.00
-            else:
-                return 0.00
+
+        if (instance.takesstudent):
+            if(instance.takesstudent.examobj):
+                if(instance.takesstudent.examobj.exam_marks):
+                    if instance.takesstudent.examobj.exam_marks >= 93:
+                        return 4.00
+                    elif instance.takesstudent.examobj.exam_marks >= 90:
+                        return 3.85
+                    elif instance.takesstudent.examobj.exam_marks >= 87:
+                        return 3.70
+                    elif instance.takesstudent.examobj.exam_marks >= 80:
+                        return 3.50
+                    elif instance.takesstudent.examobj.exam_marks >= 70:
+                        return 3.00
+                    else:
+                        return 0.00
+
+
+class ExamSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Exam
+        fields = "__all__"
+
+class GiveExamSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = GiveExam
+        fields = "__all__"
+
+class GiveMarksSerializer(serializers.HyperlinkedModelSerializer):
+    student_id = serializers.SerializerMethodField(method_name='get_student_id')
+    class Meta:
+        model = GiveMarks
+        fields = "__all__"
+
+    def get_student_id(self,request):
+
+        return request.examobj.student.sid.sid;
+        pass
 
 # class StudentGradesSerializer(serializers.HyperlinkedModelSerializer):
 #     class Meta:
