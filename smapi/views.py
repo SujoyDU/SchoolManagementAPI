@@ -70,7 +70,7 @@ class InstructorViewSet(viewsets.ModelViewSet):
         if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
         elif self.action == 'list':
-            permission_classes = [IsLoggedInUserOrAdmin]
+            permission_classes = [IsTeacherUser]
         elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
             permission_classes = [IsTeacherUser]
         return [permission() for permission in permission_classes]
@@ -127,8 +127,10 @@ class StudentViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         permission_classes = []
         if self.action == 'create' or self.action == 'destroy':
-            permission_classes = [IsStudentUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+            permission_classes = [IsAdminUser]
+        elif self.action == 'list':
+            permission_classes = [IsLoggedInUserOrAdmin]
+        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
             permission_classes = [IsStudentUser]
         return [permission() for permission in permission_classes]
 

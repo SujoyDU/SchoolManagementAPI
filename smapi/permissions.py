@@ -37,13 +37,18 @@ class IsTeacherUser(permissions.BasePermission):
 class IsStudentUser(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        isStudent = False
-        if (request.user.profile.user_type) == 'S':
-            isStudent = True
-        return request.user and isStudent
-
+        isTeacher = False
+        if (not request.user.is_superuser):
+            if (request.user.profile.user_type) == 'S':
+                isTeacher = True
+            return request.user and isTeacher
+        else:
+            return request.user and request.user.is_staff
     def has_object_permission(self, request, view, obj):
-        isStudent = False
-        if (request.user.profile.user_type) == 'S':
-            isStudent = True
-        return request.user and isStudent
+        isTeacher = False
+        if (not request.user.is_superuser):
+            if (request.user.profile.user_type) == 'S':
+                isTeacher = True
+            return request.user and isTeacher
+        else:
+            return request.user and request.user.is_staff

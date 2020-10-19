@@ -126,7 +126,7 @@ class TakesSerializer(serializers.HyperlinkedModelSerializer):
         fields = "__all__"
 
     def get_marks(self,request):
-        if(request.takesstudent.examobj.exam_marks):
+        if(hasattr(request,'takesstudent')):
             return request.takesstudent.examobj.exam_marks
         else: return -1.00
         pass
@@ -134,10 +134,9 @@ class TakesSerializer(serializers.HyperlinkedModelSerializer):
     def calculate_grade(self,instance):
         if instance.course_status == 'W':
             return 'W'
-
-        if (instance.takesstudent):
-            if(instance.takesstudent.examobj):
-                if(instance.takesstudent.examobj.exam_marks):
+        # if instance.course_status == 'C' and instance.course_marks < 0:
+        #     return 'N/A'
+        if (hasattr(instance,'takesstudent')):
                     if instance.takesstudent.examobj.exam_marks >= 93:
                         return 'A'
                     elif instance.takesstudent.examobj.exam_marks >= 90:
@@ -151,14 +150,14 @@ class TakesSerializer(serializers.HyperlinkedModelSerializer):
                     else:
                         return 'F'
 
-        if instance.course_status == 'C' and instance.course_marks < 0:
-            return 'N/A'
+
 
     def calculate_course_gpa(self, instance):
         if instance.course_status == 'W':
             return 0.00
-
-        if (instance.takesstudent):
+        # if instance.course_status == 'C' and instance.course_marks < 0:
+        #     return 0.00
+        if (hasattr(instance,'takesstudent')):
             if(instance.takesstudent.examobj):
                 if(instance.takesstudent.examobj.exam_marks):
                     if instance.takesstudent.examobj.exam_marks >= 93:
