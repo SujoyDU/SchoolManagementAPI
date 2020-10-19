@@ -110,6 +110,8 @@ class Teaches(models.Model):
     # tid = models.CharField(max_length=10)
     # course_id = models.CharField(max_length=10)
 
+    class Meta:
+        unique_together = ['tid', 'teachcourse']
 
     def __str__(self):
         return "{tid} {teachcourse}".format(tid = self.tid,teachcourse=self.teachcourse)
