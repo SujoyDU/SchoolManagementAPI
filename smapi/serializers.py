@@ -188,6 +188,13 @@ class GiveExamSerializer(serializers.HyperlinkedModelSerializer):
         model = GiveExam
         fields = "__all__"
 
+    def validate(self, request):
+        if(request['stuexam'].teacher.teachcourse == request['student'].take_course):
+            return request
+        else: raise serializers.ValidationError("Validation Error")
+
+
+
 class GiveMarksSerializer(serializers.HyperlinkedModelSerializer):
     student_id = serializers.SerializerMethodField(method_name='get_student_id')
     class Meta:

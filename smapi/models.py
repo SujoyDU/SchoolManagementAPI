@@ -140,15 +140,20 @@ class Takes(models.Model):
 class Exam(models.Model):
     exam_name = models.CharField(max_length=30)
     teacher = models.ForeignKey(Teaches,on_delete=models.CASCADE,related_name='exam')
+
     def __str__(self):
         return "{exam_name} {teacher}".format(exam_name = self.exam_name, teacher= self.teacher)
 
 class GiveExam(models.Model):
-    stuexam = models.OneToOneField(Exam,on_delete=models.CASCADE,related_name='stuexam')
-    student = models.OneToOneField(Takes, on_delete=models.CASCADE,related_name='takesstudent')
+    stuexam = models.ForeignKey(Exam,on_delete=models.CASCADE,related_name='stuexam')
+    student = models.ForeignKey(Takes, on_delete=models.CASCADE,related_name='takesstudent')
     isFinished = models.BooleanField(default=True)
     def __str__(self):
         return "{stuexam} {student}".format(stuexam = self.stuexam, student= self.student)
+
+    class Meta:
+        unique_together = ['stuexam', 'student']
+
 
 class GiveMarks(models.Model):
     examobj = models.OneToOneField(GiveExam,on_delete=models.CASCADE,related_name='examobj')
