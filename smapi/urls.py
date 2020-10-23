@@ -2,6 +2,9 @@ from django.conf.urls import url, include
 from rest_framework import routers
 from smapi.views import UserViewSet, DepartmentViewSet, InstructorViewSet, CourseViewSet,TeachesViewSet,StudentViewSet,TakesViewSet,SectionViewSet
 from smapi.views import ExamViewSet,GiveExamViewSet,GiveMarksViewSet
+
+
+
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'department', DepartmentViewSet)
@@ -19,5 +22,4 @@ router.register(r'markexam', GiveMarksViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^auth/', include('rest_auth.urls')),
-
 ]

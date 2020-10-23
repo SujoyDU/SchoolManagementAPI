@@ -45,9 +45,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DepartmentSerializer(serializers.HyperlinkedModelSerializer):
-    course = serializers.StringRelatedField(many=True)
-    instructors = serializers.StringRelatedField(many=True)
-    deptstudents = serializers.StringRelatedField(many=True)
+    course = serializers.StringRelatedField(many=True, read_only=True)
+    instructors = serializers.StringRelatedField(many=True, read_only=True)
+    deptstudents = serializers.StringRelatedField(many=True,read_only=True)
     class Meta:
         model = Department
         fields = ('dept_name','building','budget','course','instructors','deptstudents')
@@ -126,6 +126,8 @@ class TakesSerializer(serializers.HyperlinkedModelSerializer):
         fields = "__all__"
 
     def get_marks(self,request):
+        # if(GiveExam.objects.filter(student=request)):
+        #     return GiveExam.objects.filter(student=request)[0].examobj.exam_marks
         if(hasattr(request,'takesstudent')):
             if(hasattr(request.takesstudent,'examobj')):
                 if(hasattr(request.takesstudent.examobj,'exam_marks')):
