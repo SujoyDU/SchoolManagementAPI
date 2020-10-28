@@ -55,14 +55,20 @@ class DepartmentSerializer(serializers.HyperlinkedModelSerializer):
 
 class InstructorSerializer(serializers.HyperlinkedModelSerializer):
     # uid = UserSerializer(required=True)
+    current_user = serializers.SerializerMethodField('_user')
     class Meta:
         model = Instructor
-        fields = ('uid','tid','dept_name','designation','salary')
+        fields = ('uid','tid','dept_name','designation','salary','current_user')
 
     def create(self, validated_data):
         instructor = Instructor(**validated_data)
         instructor.save()
         return instructor
+
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            return request.user.pk
 
 class CourseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -81,15 +87,22 @@ class TeachesSerializer(serializers.HyperlinkedModelSerializer):
     # totalstudents = serializers.HyperlinkedRelatedField(many=True,queryset=Takes.objects.all(),view_name='takes-detail')
     # giveGrades = serializers.SerializerMethodField(method_name='calculate_credits')
     studentList = serializers.SerializerMethodField(method_name='get_students')
-
+    current_user = serializers.SerializerMethodField('_user')
     class Meta:
         model = Teaches
-        fields = ('tid','teachcourse','studentList')
+        fields = '__all__'
 
     def get_students(self,request):
         students = Takes.objects.filter(take_course=request.teachcourse).values('sid')
         return students;
 
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            if(hasattr(request.user,'teacher')):
+                if(hasattr(request.user.teacher,'pk')):
+                    return request.user.teacher.pk
+            else: return request.user.email
     # def give_grade(self,request):
 
 
@@ -116,6 +129,8 @@ class StudentSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TakesSerializer(serializers.HyperlinkedModelSerializer):
+    current_user = serializers.SerializerMethodField('_user')
+    section = serializers.SerializerMethodField('getSection')
     course_grade = serializers.ReadOnlyField()
     course_gpa = serializers.ReadOnlyField()
     course_marks = serializers.SerializerMethodField(method_name='get_marks')
@@ -124,6 +139,18 @@ class TakesSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Takes
         fields = "__all__"
+
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            if(hasattr(request.user,'student')):
+                if(hasattr(request.user.student,'pk')):
+                    return request.user.student.pk
+            else: return request.user.email
+
+    def getSection(self, request):
+        if (hasattr(request, 'take_course_id')):
+            return request.take_course_id
 
     def get_marks(self,request):
         # if(GiveExam.objects.filter(student=request)):
@@ -181,14 +208,62 @@ class TakesSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ExamSerializer(serializers.HyperlinkedModelSerializer):
+
+    current_user = serializers.SerializerMethodField('_user')
+    exam_assigner = serializers.SerializerMethodField('getAssigner')
+    section = serializers.SerializerMethodField('getSection')
     class Meta:
         model = Exam
         fields = "__all__"
 
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            if(hasattr(request.user,'teacher')):
+                if(hasattr(request.user.teacher,'pk')):
+                    return request.user.teacher.pk
+            else: return request.user.email
+
+    def getAssigner(self, request):
+        # request = self.context.get('request', None)
+        # request.teacher.tid_id
+        if (hasattr(request, 'teacher')):
+            if (hasattr(request.teacher, 'tid_id')):
+                return request.teacher.tid_id
+
+    def getSection(self, request):
+        if (hasattr(request, 'teacher')):
+            if (hasattr(request.teacher, 'teachcourse_id')):
+                return request.teacher.teachcourse_id
+
+
 class GiveExamSerializer(serializers.HyperlinkedModelSerializer):
+    exam_assigner = serializers.SerializerMethodField('getAssigner')
+    section = serializers.SerializerMethodField('getSection')
+    current_user = serializers.SerializerMethodField('_user')
     class Meta:
         model = GiveExam
         fields = "__all__"
+
+    # request.stuexam.teacher.tid_id
+    def getAssigner(self, request):
+        if(hasattr(request,'stuexam')):
+            if (hasattr(request.stuexam, 'teacher')):
+                if (hasattr(request.stuexam.teacher, 'tid_id')):
+                    return request.stuexam.teacher.tid_id
+
+    def getSection(self, request):
+        if (hasattr(request,'student')):
+            if (hasattr(request.student, 'take_course_id')):
+                return request.student.take_course_id
+
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            if(hasattr(request.user,'student')):
+                if(hasattr(request.user.student,'pk')):
+                    return request.user.student.pk
+            else: return request.user.email
 
     def validate(self, request):
         if(request['stuexam'].teacher.teachcourse == request['student'].take_course):
@@ -198,15 +273,37 @@ class GiveExamSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class GiveMarksSerializer(serializers.HyperlinkedModelSerializer):
+    section = serializers.SerializerMethodField('getSection')
+    exam_assigner = serializers.SerializerMethodField('get_tid')
     student_id = serializers.SerializerMethodField(method_name='get_student_id')
+    current_user = serializers.SerializerMethodField('_user')
     class Meta:
         model = GiveMarks
         fields = "__all__"
+    # request.examobj.student.take_course_id
+    def getSection(self, request):
+        if (hasattr(request,'examobj')):
+            if (hasattr(request.examobj, 'student')):
+                if (hasattr(request.examobj.student, 'take_course_id')):
+                    return request.examobj.student.take_course_id
+
 
     def get_student_id(self,request):
 
         return request.examobj.student.sid.sid;
         pass
+    # obj.examobj.stuexam.teacher.tid_id
+    def get_tid(self,request):
+        return request.examobj.stuexam.teacher.tid_id
+
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            if(hasattr(request.user,'teacher')):
+                if(hasattr(request.user.teacher,'pk')):
+                    return request.user.teacher.pk
+            else: return request.user.email
+
 
 # class StudentGradesSerializer(serializers.HyperlinkedModelSerializer):
 #     class Meta:

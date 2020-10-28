@@ -95,13 +95,13 @@ class SectionViewSet(viewsets.ModelViewSet):
     serializer_class = SectionSerializer
 
     # Add this code block
-    def get_permissions(self):
-        permission_classes = []
-        if self.action == 'create' or self.action == 'destroy':
-            permission_classes = [IsAdminUser]
-        elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
-            permission_classes = [IsLoggedInUserOrAdmin]
-        return [permission() for permission in permission_classes]
+    # def get_permissions(self):
+    #     permission_classes = []
+    #     if self.action == 'create' or self.action == 'destroy':
+    #         permission_classes = [IsAdminUser]
+    #     elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
+    #         permission_classes = [IsLoggedInUserOrAdmin]
+    #     return [permission() for permission in permission_classes]
 
 
 class TeachesViewSet(viewsets.ModelViewSet):
@@ -160,7 +160,7 @@ class ExamViewSet(viewsets.ModelViewSet):
         if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsTeacherUser]
         elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
-            permission_classes = [IsTeacherUser]
+            permission_classes = [IsLoggedInUserOrAdmin]
         return [permission() for permission in permission_classes]
 
 
@@ -174,7 +174,7 @@ class GiveExamViewSet(viewsets.ModelViewSet):
         if self.action == 'create' or self.action == 'destroy':
             permission_classes = [IsStudentUser]
         elif self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update' or self.action == 'list':
-            permission_classes = [IsStudentUser]
+            permission_classes = [IsLoggedInUserOrAdmin]
         return [permission() for permission in permission_classes]
 
 class GiveMarksViewSet(viewsets.ModelViewSet):
